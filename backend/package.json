@@ -1,0 +1,14 @@
+{
+  "name": "despertador-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "packageManager": "pnpm@11.24.0",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": { "express": "^5.2.1" }
+}

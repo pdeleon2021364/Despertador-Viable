@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101313" />
+    <meta name="description" content="Alarma musical con detección de somnolencia local en tu dispositivo." />
+    <title>Despertador Anti-Sueño</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Ctext y='32' font-size='32'%3E%E2%98%80%3C/text%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/app.js"></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <button id="home" class="brand" type="button"><span class="brand-mark" aria-hidden="true">&#9788;</span> Despertador <span>Anti-Sueño</span></button>
+        <span class="privacy">Cámara local</span>
+      </header>
+      <p id="storage-warning" class="notice" hidden>El navegador no permite guardar datos. La vigilancia funciona, pero el historial se perderá al cerrar la página.</p>
+      <p id="error-message" class="error" role="alert" hidden></p>
+      <section id="inicio" class="hero">
+        <div class="eyebrow">ATENCIÓN Y DESCANSO</div>
+        <h1>Mantente<br /><span>despierto.</span></h1>
+        <p class="lead">Una ayuda que reconoce señales de somnolencia y te avisa con música. Tu imagen se procesa en este dispositivo y nunca se graba.</p>
+        <ol class="steps"><li>Permite la cámara.</li><li>Mira al frente durante 5 segundos.</li><li>Mantén esta pestaña visible.</li></ol>
+        <div class="actions">
+          <button id="start" class="button primary">Iniciar vigilancia <span aria-hidden="true">&#8599;</span></button>
+          <button id="show-settings" class="button secondary">Ajustes</button>
+          <button id="show-history" class="button secondary">Historial</button>
+        </div>
+      </section>
+      <section id="calibration" class="panel" hidden aria-labelledby="calibration-heading">
+        <div class="eyebrow">PREPARACIÓN</div><h2 id="calibration-heading" tabindex="-1">Calibremos tu mirada</h2>
+        <p>Siéntate despierto, con buena luz y la cabeza erguida. Mantén los ojos abiertos mirando al frente.</p>
+        <div class="camera-wrap"><video id="video" autoplay muted playsinline aria-label="Vista de la cámara durante la calibración"></video></div>
+        <progress id="calibration-progress" max="1" value="0" aria-label="Progreso de calibración"></progress>
+        <p id="calibration-count" role="status">Preparando la cámara…</p>
+        <button id="cancel" class="button secondary wide">Cancelar</button>
+      </section>
+      <section id="monitor" class="panel" hidden aria-labelledby="monitor-heading">
+        <div class="monitor-head"><div><div class="eyebrow" id="monitor-heading">VIGILANCIA</div><h2 id="live-state" role="status" tabindex="-1">Preparando…</h2></div><div class="counter"><strong id="alert-count">0</strong><span>alertas</span></div></div>
+        <div class="camera-wrap mini"><video id="monitor-video" autoplay muted playsinline aria-label="Vista de la cámara"></video><div id="face-status">Buscando rostro…</div></div>
+        <p id="monitor-message" class="live-status">Mantén esta pestaña visible.</p>
+        <p id="wake-status" class="small"></p>
+        <p class="small">Tiempo de sesión: <span id="session-time">00:00</span></p>
+        <button id="awake" class="button primary wide" hidden>Estoy despierto</button>
+        <button id="enable-audio" class="button primary wide" hidden>Activar sonido</button>
+        <div class="actions"><button id="pause" class="button secondary">Pausar</button><button id="resume" class="button primary" hidden>Reanudar vigilancia</button><button id="stop" class="button secondary">Terminar sesión</button></div>
+      </section>
+      <section id="settings" class="panel" hidden aria-labelledby="settings-heading">
+        <div class="eyebrow">PREFERENCIAS</div><h2 id="settings-heading" tabindex="-1">Ajustes</h2>
+        <form id="settings-form">
+          <label>Sensibilidad<select id="sensitivity"><option value="baja">Baja</option><option value="media">Media</option><option value="alta">Alta</option></select></label>
+          <label>Tiempo con ojos cerrados (milisegundos)<input id="eyes-closed" type="number" min="500" max="5000" step="100" required /></label>
+          <label>Inclinación para detectar cabeceo (grados)<input id="head-angle" type="number" min="5" max="45" step="1" required /></label>
+          <label>Sonido<select id="sound"></select></label>
+          <label>Volumen máximo <output id="volume-value" for="volume"></output><input id="volume" type="range" min="0.1" max="1" step="0.05" /></label>
+          <button id="preview-sound" type="button" class="button secondary">Probar sonido</button>
+          <label class="check"><input id="escalation" type="checkbox" /> Aumentar volumen y ritmo si no reacciono</label>
+          <label class="check"><input id="vibration" type="checkbox" /> Vibrar al alertar</label>
+          <p id="vibration-info" class="small" hidden>Este navegador no ofrece vibración.</p>
+          <label class="check"><input id="yawn" type="checkbox" /> Detectar bostezos (experimental)</label>
+          <div class="actions"><button class="button primary" type="submit">Guardar ajustes</button><button id="settings-back" type="button" class="button secondary">Volver</button></div>
+        </form>
+      </section>
+      <section id="history" class="panel" hidden aria-labelledby="history-heading">
+        <div class="eyebrow">REGISTRO LOCAL</div><h2 id="history-heading" tabindex="-1">Sesiones y alertas</h2>
+        <p class="small">Abre una sesión para consultar sus eventos.</p><div id="history-list" class="history-list"></div>
+        <button id="history-back" class="button secondary wide">Volver</button>
+      </section>
+      <aside class="notice">Esta app no es un dispositivo de seguridad. No la uses como única protección al conducir u operar maquinaria.</aside>
+      <footer>Sin cuenta · Sin grabaciones · Datos guardados en tu navegador</footer>
+    </main>
+    <div id="toast" role="status"></div>
+    <noscript>Activa JavaScript para utilizar la cámara y la alarma.</noscript>
+  </body>
+</html>

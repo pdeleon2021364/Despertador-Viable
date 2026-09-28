@@ -1,0 +1,12 @@
+{
+  "name": "despertador-anti-sueno",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node backend/scripts/dev.js",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "lint": "npm --prefix frontend run lint"
+  }
+}
