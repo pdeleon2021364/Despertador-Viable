@@ -25,7 +25,21 @@ export function extractMetrics(landmarks, aspect = 1) {
   if (width === 0) return null;
   return { ear: (left + right) / 2, pitch, mouthRatio: distance(mouth[2], mouth[3], aspect) / width };
 }
+const NOISE = /blendshapesgraph|xnnpack|tensorflow lite|gl_context|gl version|opengl error checking|graph successfully started|graph finished closing|destroyed webgl|custom_dbg|put_char|mediapipe|vision_wasm|tflite|gl_context_webgl|setlog|registered op|created tensor/i;
+let silenced = false;
+export function silenceMediaPipeLogs() {
+  if (silenced || typeof console === 'undefined') return;
+  silenced = true;
+  for (const level of ['log', 'info', 'warn', 'debug', 'error']) {
+    const original = console[level].bind(console);
+    console[level] = (...args) => {
+      if (args.some(arg => typeof arg === 'string' && NOISE.test(arg))) return;
+      original(...args);
+    };
+  }
+}
 export async function loadLandmarker(signal) {
+  silenceMediaPipeLogs();
   const { FaceLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
   const files = await FilesetResolver.forVisionTasks('/vision');
   const url = import.meta.env.VITE_MODEL_URL || 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
@@ -37,7 +51,7 @@ export async function loadLandmarker(signal) {
     try {
       const task = await FaceLandmarker.createFromOptions(files, {
         baseOptions: { modelAssetBuffer, delegate }, runningMode: 'VIDEO', numFaces: 1,
-        minFaceDetectionConfidence: 0.6, minFacePresenceConfidence: 0.6, minTrackingConfidence: 0.6
+        minFaceDetectionConfidence: 0.4, minFacePresenceConfidence: 0.4, minTrackingConfidence: 0.4
       });
       if (signal.aborted) { task.close(); signal.throwIfAborted(); }
       return task;

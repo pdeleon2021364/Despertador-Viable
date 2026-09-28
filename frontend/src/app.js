@@ -1,7 +1,7 @@
 import { Alarm } from './alarm.js';
 import { calibrate } from './calibration.js';
 import { AlarmSounds, createCalibration, createEvent, createSession, getSound } from './entities.js';
-import { AWAKE_MS, createDetectionState, extractMetrics, loadLandmarker, processMetrics, resetDetection } from './detector.js';
+import { AWAKE_MS, createDetectionState, extractMetrics, loadLandmarker, processMetrics, resetDetection, silenceMediaPipeLogs } from './detector.js';
 import { createStorage } from './storage.js';
 
 const $ = id => document.getElementById(id);
@@ -53,8 +53,14 @@ function renderSettings() {
   $('vibration-info').hidden = Boolean(navigator.vibrate);
 }
 function settingsFromForm() {
-  return { sensitivity: $('sensitivity').value, eyesClosedMs: Number($('eyes-closed').value),
-    headNodAngle: Number($('head-angle').value), soundId: $('sound').value, volume: Number($('volume').value),
+  const eyesClosedMs = Number($('eyes-closed').value);
+  const headNodAngle = Number($('head-angle').value);
+  const volume = Number($('volume').value);
+  if (!Number.isFinite(eyesClosedMs) || eyesClosedMs < 500 || eyesClosedMs > 5000) throw new Error('Tiempo de ojos cerrados inválido.');
+  if (!Number.isFinite(headNodAngle) || headNodAngle < 5 || headNodAngle > 45) throw new Error('Ángulo de cabeceo inválido.');
+  if (!Number.isFinite(volume) || volume < 0.1 || volume > 1) throw new Error('Volumen inválido.');
+  return { sensitivity: $('sensitivity').value, eyesClosedMs,
+    headNodAngle, soundId: $('sound').value, volume,
     escalation: $('escalation').checked, vibration: $('vibration').checked, yawnDetection: $('yawn').checked };
 }
 const eventNames = { EYES_CLOSED: 'Ojos cerrados', HEAD_NOD: 'Cabeceo', YAWN: 'Bostezo' };
@@ -157,11 +163,14 @@ async function start() {
     void acquireWakeLock();
     frameId = requestAnimationFrame(tick);
   } catch (error) {
-    if (controller === run && !run.signal.aborted) { await finish(); showError(cameraError(error)); }
+    if (controller === run) {
+      if (run.signal.aborted) { await finish(); }
+      else { await finish(); showError(cameraError(error)); }
+    }
   }
 }
 function trigger(event) {
-  if (alarmActive) return;
+  if (alarmActive || !session) return;
   alarmActive = true;
   const { settings } = store.getState();
   const next = store.addEvent(createEvent(session.id, event.type, event.metricValue, event.durationMs, settings.soundId));
@@ -200,7 +209,19 @@ function tick(now) {
       $('face-status').textContent = missing ? (result.kind === 'no_face' ? 'No te veo' : 'Buscando rostro…') : 'Rostro detectado';
       $('live-state').textContent = alarmActive ? '¡Reacciona!' : missing ? $('face-status').textContent : result.kind === 'awake' ? 'Despierto' : 'Atención';
       $('monitor').classList.toggle('monitor-alert', alarmActive);
-      if (!alarmActive) $('monitor-message').textContent = missing ? 'Centra tu rostro y mejora la iluminación.' : 'Vigilancia activa. Mantén esta pestaña visible.';
+      if (!alarmActive) $('monitor-message').textContent = missing ? 'No te veo bien. Acerca tu rostro a la cámara.' : 'Vigilancia activa. Mantén esta pestaña visible.';
+      const catImage = $('cat-image');
+      const catLabel = $('cat-label');
+      const catBox = $('cat-box');
+      const isDrowsy = result.kind === 'drowsy' || alarmActive;
+      const newSrc = isDrowsy ? '/GatoDurmiendo.png' : '/GatoDespierto.png';
+      const newLabel = isDrowsy ? 'Durmiendo…' : 'Despierto';
+      if (catImage.src !== new URL(newSrc, window.location.href).href) {
+        catImage.src = newSrc;
+        catImage.alt = isDrowsy ? 'Gato durmiendo' : 'Gato despierto';
+        catLabel.textContent = newLabel;
+        catBox.classList.toggle('drowsy', isDrowsy);
+      }
     }
     frameId = requestAnimationFrame(tick);
   } catch (error) { void finish(); showError('La detección se detuvo: ' + error.message); }
@@ -294,4 +315,5 @@ document.addEventListener('visibilitychange', () => {
   else pause(false);
 });
 window.addEventListener('pagehide', () => { void finish(); });
+silenceMediaPipeLogs();
 syncStorage();

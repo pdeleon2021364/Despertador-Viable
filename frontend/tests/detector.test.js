@@ -95,5 +95,7 @@ test('recuperación requiere ojos abiertos continuos y se reinicia si falta el r
 test('calibración usa medianas y rechaza falta de muestras y movimientos', () => {
   assert.deepEqual(summarizeCalibration(Array(70).fill(awake)), { baselineEyeRatio: 0.3, baselineHeadPitch: 0 });
   assert.throws(() => summarizeCalibration([awake]), /muestras/);
+  assert.throws(() => summarizeCalibration(Array(23).fill(awake)), /muestras/);
+  assert.doesNotThrow(() => summarizeCalibration(Array(24).fill(awake)));
   assert.throws(() => summarizeCalibration([...Array(35).fill(awake), ...Array(35).fill({ ...awake, pitch: 20 })]), /movió/);
 });

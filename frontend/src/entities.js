@@ -20,7 +20,7 @@ export function validateDevice(d) {
 export function validateSettings(s) {
   return Boolean(s && uuid(s.deviceId) && ['baja', 'media', 'alta'].includes(s.sensitivity)
     && between(s.eyesClosedMs, 500, 5000) && between(s.headNodAngle, 5, 45)
-    && text(s.soundId) && between(s.volume, 0.1, 1)
+    && AlarmSounds.some(sound => sound.id === s.soundId) && between(s.volume, 0.1, 1)
     && ['escalation', 'vibration', 'yawnDetection'].every(key => typeof s[key] === 'boolean'));
 }
 export function validateCalibration(c) {
